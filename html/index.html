@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reportes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: transparent;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(30, 35, 45, 0.95));
+            border: 2px solid rgba(74, 144, 226, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            padding: 20px;
+            border-radius: 13px 13px 0 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+
+        .form-group select,
+        .form-group textarea,
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select:focus,
+        .form-group textarea:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #4A90E2;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            max-height: 200px;
+        }
+
+        .form-group select option {
+            background: #1a1f2e;
+            color: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #357ABD, #2968A3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: rgba(74, 144, 226, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Reports List Styles */
+        .reports-container {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .reports-count {
+            background: rgba(74, 144, 226, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .report-item {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .report-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #4A90E2;
+            transform: translateY(-2px);
+        }
+
+        .report-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .report-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+
+        .report-player {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .report-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-open {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .status-assigned {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+        }
+
+        .report-body {
+            padding: 15px 20px;
+        }
+
+        .report-subject {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4A90E2;
+        }
+
+        .report-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .report-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Report Details Styles */
+        .report-details {
+            max-width: 900px;
+        }
+
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .player-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .player-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4A90E2;
+            margin-bottom: 10px;
+        }
+
+        .report-content {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .screenshot-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .screenshot {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            border: 2px solid rgba(74, 144, 226, 0.3);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, #4A90E2, #357ABD); }
+        .btn-success { background: linear-gradient(135deg, #27ae60, #229954); }
+        .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .btn-info { background: linear-gradient(135deg, #3498db, #2980b9); }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(74, 144, 226, 0.6);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(74, 144, 226, 0.8);
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(30, 35, 45, 0.95));
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(74, 144, 226, 0.8);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Report Submission Form -->
+    <div id="reportForm" class="container">
+        <div class="header">
+            <h2>📋 Enviar Reporte</h2>
+            <button class="close-btn" onclick="closeReportForm()">&times;</button>
+        </div>
+        <div class="content">
+            <form id="submitReportForm">
+                <div class="form-group">
+                    <label for="reportSubject">📝 Asunto del Reporte</label>
+                    <select id="reportSubject" required>
+                        <option value="">Selecciona un asunto...</option>
+                        <option value="🚫 Jugador rompiendo reglas">🚫 Jugador rompiendo reglas</option>
+                        <option value="🤖 Posible cheater/hacker">🤖 Posible cheater/hacker</option>
+                        <option value="🎭 Rol inadecuado">🎭 Rol inadecuado</option>
+                        <option value="💬 Toxicidad/Insultos">💬 Toxicidad/Insultos</option>
+                        <option value="🚗 Fail driving/VDM">🚗 Fail driving/VDM</option>
+                        <option value="🔫 RDM (Random Death Match)">🔫 RDM (Random Death Match)</option>
+                        <option value="🏃 Metagaming">🏃 Metagaming</option>
+                        <option value="🚁 Abuso de bugs">🚁 Abuso de bugs</option>
+                        <option value="🆘 Solicitar ayuda">🆘 Solicitar ayuda</option>
+                        <option value="other">📝 Otro (especificar)</option>
+                    </select>
+                </div>
+                
+                <div id="customSubjectGroup" class="form-group" style="display: none;">
+                    <label for="customSubject">Especifica el asunto:</label>
+                    <input type="text" id="customSubject" maxlength="100" placeholder="Describe brevemente el asunto...">
+                </div>
+
+                <div class="form-group">
+                    <label for="reportDescription">📄 Descripción Detallada</label>
+                    <textarea id="reportDescription" placeholder="Describe detalladamente lo que ha ocurrido. Incluye nombres de jugadores, ubicaciones, y cualquier información relevante..." required maxlength="500"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    📤 Enviar Reporte
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reports List -->
+    <div id="reportsList" class="container reports-container">
+        <div class="header">
+            <div class="reports-header">
+                <h2>🚨 Sistema de Reportes</h2>
+                <div class="reports-count" id="reportsCount">0 reportes</div>
+            </div>
+            <button class="close-btn" onclick="closeReportsList()">&times;</button>
+        </div>
+        <div class="content" id="reportsContent">
+            <!-- Reports will be populated here -->
+        </div>
+    </div>
+
+    <!-- Report Details -->
+    <div id="reportDetails" class="container report-details">
+        <div class="header">
+            <h2 id="detailsTitle">📋 Detalles del Reporte</h2>
+            <button class="close-btn" onclick="closeReportDetails()">&times;</button>
+        </div>
+        <div class="content">
+            <div class="details-header">
+                <button class="back-btn" onclick="backToReportsList()">← Volver a la lista</button>
+            </div>
+            
+            <div class="player-info">
+                <div class="player-name" id="playerName"></div>
+                <div id="playerInfo"></div>
+            </div>
+
+            <div class="report-content">
+                <div class="report-subject" id="reportSubjectDetail"></div>
+                <div class="report-description" id="reportDescriptionDetail"></div>
+                <div class="report-time" id="reportTimeDetail"></div>
+            </div>
+
+            <div class="screenshot-container" id="screenshotContainer" style="display: none;">
+                <img id="screenshotImage" class="screenshot" alt="Captura del reporte">
+            </div>
+
+            <div class="actions-grid" id="actionsGrid">
+                <!-- Action buttons will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for inputs -->
+    <div id="inputModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <input type="text" id="modalInput" placeholder="">
+            <div class="modal-buttons">
+                <button class="modal-btn btn-success" onclick="confirmModalInput()">Confirmar</button>
+                <button class="modal-btn btn-danger" onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReport = null;
+        let currentAction = null;
+        let allReports = [];
+
+        // Report Form Functions
+        function openReportForm() {
+            document.getElementById('reportForm').style.display = 'block';
+        }
+
+        function closeReportForm() {
+            document.getElementById('reportForm').style.display = 'none';
+            document.getElementById('submitReportForm').reset();
+            document.getElementById('customSubjectGroup').style.display = 'none';
+        }
+
+        // Reports List Functions
+        function openReportsList(reports) {
+            allReports = reports;
+            document.getElementById('reportsList').style.display = 'block';
+            populateReportsList(reports);
+        }
+
+        function closeReportsList() {
+            document.getElementById('reportsList').style.display = 'none';
+        }
+
+        // Report Details Functions
+        function openReportDetails(report) {
+            currentReport = report;
+            document.getElementById('reportDetails').style.display = 'block';
+            document.getElementById('reportsList').style.display = 'none';
+            populateReportDetails(report);
+        }
+
+        function closeReportDetails() {
+            document.getElementById('reportDetails').style.display = 'none';
+            currentReport = null;
+        }
+
+        function backToReportsList() {
+            document.getElementById('reportDetails').style.display = 'none';
+            document.getElementById('reportsList').style.display = 'block';
+        }
+
+        // Modal Functions
+        function showModal(title, placeholder, action) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalInput').placeholder = placeholder;
+            document.getElementById('modalInput').value = '';
+            document.getElementById('inputModal').style.display = 'flex';
+            currentAction = action;
+        }
+
+        function closeModal() {
+            document.getElementById('inputModal').style.display = 'none';
+            currentAction = null;
+        }
+
+        function confirmModalInput() {
+            const input = document.getElementById('modalInput').value;
+            if (input.trim() && currentAction && currentReport) {
+                fetch(`https://${GetParentResourceName()}/performAction`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: currentAction,
+                        reportId: currentReport.id,
+                        playerId: currentReport.playerId,
+                        input: input
+                    })
+                });
+                closeModal();
+            }
+        }
+
+        // Populate Reports List
+        function populateReportsList(reports) {
+            const content = document.getElementById('reportsContent');
+            const count = document.getElementById('reportsCount');
+            
+            count.textContent = `${reports.length} reporte${reports.length !== 1 ? 's' : ''}`;
+            
+            if (reports.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">📭 No hay reportes disponibles</div>';
+                return;
+            }
+
+            content.innerHTML = reports.map(report => {
+                const timeAgo = getTimeAgo(report.timestamp);
+                const statusClass = report.assigned ? 'status-assigned' : 'status-open';
+                const statusText = report.assigned ? `👤 ${report.assigned}` : '❌ Sin asignar';
+                
+                return `
+                    <div class="report-item" onclick="openReportDetails(${JSON.stringify(report).replace(/"/g, '&quot;')})">
+                        <div class="report-header">
+                            <div class="report-id">📋 Reporte #${report.id}</div>
+                            <div class="report-player">👤 ${report.playerName} (ID: ${report.playerId})</div>
+                            <span class="report-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="report-body">
+                            <div class="report-subject">${report.subject}</div>
+                            <div class="report-description">${report.description.length > 100 ? report.description.substring(0, 100) + '...' : report.description}</div>
+                            <div class="report-time">⏰ ${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Populate Report Details
+        function populateReportDetails(report) {
+            document.getElementById('detailsTitle').textContent = `📋 Reporte #${report.id}`;
+            document.getElementById('playerName').textContent = `${report.playerName} (ID: ${report.playerId})`;
+            document.getElementById('playerInfo').innerHTML = `
+                <div style="margin-top: 10px;">
+                    <div>📍 Ubicación: ${report.coords.x.toFixed(1)}, ${report.coords.y.toFixed(1)}, ${report.coords.z.toFixed(1)}</div>
+                    <div>👨‍💼 Asignado a: ${report.assigned || 'Sin asignar'}</div>
+                </div>
+            `;
+            
+            document.getElementById('reportSubjectDetail').textContent = report.subject;
+            document.getElementById('reportDescriptionDetail').textContent = report.description;
+            document.getElementById('reportTimeDetail').textContent = `⏰ ${getTimeAgo(report.timestamp)}`;
+            
+            // Screenshot
+            const screenshotContainer = document.getElementById('screenshotContainer');
+            const screenshotImage = document.getElementById('screenshotImage');
+            if (report.screenshot && report.screenshot !== 'No disponible') {
+                screenshotContainer.style.display = 'block';
+                screenshotImage.src = report.screenshot;
+            } else {
+                screenshotContainer.style.display = 'none';
+            }
+            
+            // Action buttons
+            populateActionButtons();
+        }
+
+        function populateActionButtons() {
+            const actionsGrid = document.getElementById('actionsGrid');
+            actionsGrid.innerHTML = `
+                <button class="action-btn btn-primary" onclick="performAction('spectate')">👁️ Espectear</button>
+                <button class="action-btn btn-info" onclick="showModal('Enviar Mensaje', 'Escribe tu mensaje...', 'send_message')">💬 Enviar Mensaje</button>
+                <button class="action-btn btn-success" onclick="performAction('tp_to_player')">📍 TP a Jugador</button>
+                <button class="action-btn btn-success" onclick="performAction('tp_player_to_me')">📍 TP Jugador a Mí</button>
+                <button class="action-btn btn-warning" onclick="performAction('tp_ls')">🌴 TP a Los Santos</button>
+                <button class="action-btn btn-warning" onclick="performAction('tp_sandy')">🏜️ TP a Sandy</button>
+                <button class="action-btn btn-warning" onclick="performAction('tp_paleto')">🏔️ TP a Paleto</button>
+                <button class="action-btn btn-warning" onclick="performAction('tp_cayo')">🏝️ TP a Cayo</button>
+                <button class="action-btn btn-info" onclick="performAction('give_bike')">🏍️ Dar Moto</button>
+                <button class="action-btn btn-info" onclick="performAction('give_car')">🚗 Dar Coche</button>
+                <button class="action-btn btn-primary" onclick="performAction('view_identifiers')">🆔 Ver IDs</button>
+                <button class="action-btn btn-primary" onclick="performAction('death_logs')">💀 Logs Muerte</button>
+                <button class="action-btn btn-success" onclick="performAction('heal_player')">❤️ Curar</button>
+                <button class="action-btn btn-danger" onclick="performAction('kill_player')">💀 Matar</button>
+                <button class="action-btn btn-danger" onclick="showModal('Kickear Jugador', 'Razón del kick...', 'kick_player')">👢 Kick</button>
+                <button class="action-btn btn-danger" onclick="showModal('Banear Jugador', 'Razón del ban...', 'ban_player')">🔨 Ban</button>
+                <button class="action-btn btn-warning" onclick="performAction('assign_report')">📝 Asignarme</button>
+                <button class="action-btn btn-success" onclick="performAction('close_report')">✅ Cerrar</button>
+            `;
+        }
+
+        function performAction(action) {
+            if (!currentReport) return;
+            
+            fetch(`https://${GetParentResourceName()}/performAction`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: action,
+                    reportId: currentReport.id,
+                    playerId: currentReport.playerId
+                })
+            });
+        }
+
+        // Utility Functions
+        function getTimeAgo(timestamp) {
+            const now = Date.now();
+            const diff = Math.floor((now - timestamp) / 1000);
+            
+            if (diff < 60) return `Hace ${diff} segundos`;
+            if (diff < 3600) return `Hace ${Math.floor(diff / 60)} minutos`;
+            if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} horas`;
+            return `Hace ${Math.floor(diff / 86400)} días`;
+        }
+
+        // Event Listeners
+        document.getElementById('reportSubject').addEventListener('change', function() {
+            const customGroup = document.getElementById('customSubjectGroup');
+            if (this.value === 'other') {
+                customGroup.style.display = 'block';
+                document.getElementById('customSubject').required = true;
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('customSubject').required = false;
+            }
+        });
+
+        document.getElementById('submitReportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let subject = document.getElementById('reportSubject').value;
+            if (subject === 'other') {
+                subject = document.getElementById('customSubject').value;
+            }
+            
+            const description = document.getElementById('reportDescription').value;
+            
+            if (!subject || !description) {
+                return;
+            }
+            
+            fetch(`https://${GetParentResourceName()}/submitReport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subject: subject,
+                    description: description
+                })
+            });
+            
+            closeReportForm();
+        });
+
+        // Close on ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('inputModal').style.display === 'flex') {
+                    closeModal();
+                } else if (document.getElementById('reportDetails').style.display === 'block') {
+                    closeReportDetails();
+                } else if (document.getElementById('reportsList').style.display === 'block') {
+                    closeReportsList();
+                } else if (document.getElementById('reportForm').style.display === 'block') {
+                    closeReportForm();
+                }
+            }
+        });
+
+        // NUI Messages
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+            
+            switch(data.type) {
+                case 'openReportForm':
+                    openReportForm();
+                    break;
+                case 'openReportsList':
+                    openReportsList(data.reports);
+                    break;
+                case 'closeUI':
+                    closeReportForm();
+                    closeReportsList();
+                    closeReportDetails();
+                    closeModal();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
